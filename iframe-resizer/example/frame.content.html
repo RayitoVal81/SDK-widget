@@ -11,42 +11,158 @@
 			a { float:right; margin-left:10px;}
 		</style>
 	</head> 
-	<body> 
+	<body data-gr-c-s-loaded="true">
+        <label id="app-widget-label">Url Manager</label><br>
+        <select id="app-widget-input">
+            <option>Select a url</option>
+            <option value="fr">https://scotch.com/site</option>
+            <option value="co">https://scotch.com/tyc</option>
+            <option value="it">https://scotch.com/faq</option>
+        </select>
 
-		<b>iFrame</b> 
-		<a href='#' onclick="$('p:eq(0)').toggle();return false;">Toggle content</a>
-		&nbsp;
-		<a href='#' onclick="if ('parentIFrame' in window) window.parentIFrame.size(250);return false;">Size(250)</a>
-		&nbsp;
-		<a id="nested" href="frame.nested.html">Nested</a>
-		&nbsp;
-		<a href="frame.hover.html">:Hover</a>
-		&nbsp;
-		<a href="frame.absolute.html">Absolute Position</a>
-		&nbsp;
-		<a href='#' onclick="if ('parentIFrame' in window) window.parentIFrame.sendMessage('Hello from the iFrame');return false;">Send Message</a>
-		&nbsp;
-		<a href='#' onclick="if ('parentIFrame' in window) window.parentIFrame.close();return false;">Close</a>
+        <label id="app-widget-label-2">Simple Input</label>
+        <input id="app-widget-input-2" placeholder="This is a test" />
 
-		<p>
-			Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		</p>
-		<p>
-			But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?
-		</p>
-		<p>
-			On the other hand, we denounce with righteous indignation and dislike men who are so beguiled and demoralized by the charms of pleasure of the moment, so blinded by desire, that they cannot foresee the pain and trouble that are bound to ensue; and equal blame belongs to those who fail in their duty through weakness of will, which is the same as saying through shrinking from toil and pain. These cases are perfectly simple and easy to distinguish. In a free hour, when our power of choice is untrammelled and when nothing prevents our being able to do what we like best, every pleasure is to be welcomed and every pain avoided. But in certain circumstances and owing to the claims of duty or the obligations of business it will frequently occur that pleasures have to be repudiated and annoyances accepted. The wise man therefore always holds in these matters to this principle of selection: he rejects pleasures to secure other greater pleasures, or else he endures pains to avoid worse pains.
-		</p>
+        <script>
 
-		<script>
+            /**
+             * function which contacts widget's server in order to decrypt
+             * a string provided by the SDK. The returned value is simply
+             * whatever the decrypted sting is...
+             *
+             * @param {String} eNonce
+             *    The encrypted string provided by the SDK
+             *
+             * @return {Promise<Object>}
+             *    A promise which is fullfilled with the decrypted value
+             *    of the the eNonce parameter
+             */
+            function getNonce(eNonce) {
+                return $.ajax({
+                    url: '/nonce',
+                    type:   'POST',
+                    dataType: 'json',
+                    data: {
+                        'csrfmiddlewaretoken': 'Lsr18bgR8Pt1KqSfibstSpdmJ9SoL9ihBuqpkrhM889FWQdJkYbfJh6mV3Nw0lWK',
+                        'n' : eNonce,
+                    }
+                });
+            }
 
-			var level = document.location.search.replace(/\?/,'') || 0;
+            /**
+             * function to populate the HTML elements of this widget. This
+             * function was designed to consume the "components" object 
+             * returned by the SDK's "getComponents()" function. 
+             *
+             * @param {Map} components
+             *    A map object filled with all the components assigned
+             *    to this widget instance.
+             *
+             * @return {String}
+             *    The component_name
+             */
+            function setValue(components) {
 
-			$('#nested').attr('href','frame.nested.html?'+(++level));
+                // grab the iterator and use it to retrieve the first component 
+                // (in this case, we're just expecting one component)
+                let iterator = components.values();
+                let component = iterator.next().value;
 
-		</script>
-		
+                // use the component to populate the label, name, and value of the 
+                // corresponding HTML element
+                $('#app-widget-label').text(component.label);
+                $('#app-widget-input').val(component.value);
+                $('#app-widget-input').attr('name', component.name);
 
-		<script type="text/javascript" src="../js/iframeResizer.contentWindow.min.js"></script> 
-	</body>
+                // return component name for use in our modal
+                return component.name;
+            }
+
+            /**
+             * function to get the values of the components this widget is 
+             * servicing. This function was designed to provide values
+             * for the SDK, therefore, it's returning them as an array
+             * of objects with a "name", and "value" attribute.
+             *
+             * @return {Array<Object>}
+             *    A single entry array with an object containing
+             *    the name and the value of the component this widget
+             *    is servicing
+             */
+            function getValue() {
+
+                // in this case, this widget is designed to only support 
+                // one component at a time, therefore this function will
+                // return an array containint just one object
+                return [
+                    {
+                        name:   $('#app-widget-input').attr('name'),
+                        value:  $('#app-widget-input').val()
+                    }
+                ];
+            }
+
+            /**
+             * function to prepare a "hello world" modal window displaying
+             * the name of the underlying component this widget is servicing
+             *
+             * @param {String} componentName
+             *    The component name we wish to use in our modal
+             *
+             * @return {Object}
+             *    An object specially built to be used with the SDK's modal 
+             *    function
+             */
+            function prepareModal(componentName) {
+
+                // define title
+                let titleContent = 'HELLO WORLD MODAL!'
+
+                // define html content
+                let htmlContent =
+                    '<div>I am servicing this component: <b>' + componentName + '</b></div>' +
+
+                    // basic cross script attack attempt
+                    "<div> <script> Alert('xss!'); </sc" +
+                    "ript> </div>";
+
+                // randomly choose small, medium, or large
+                var randomIndex = Math.floor(Math.random() * 3); // returns a random integer from 0 to 2
+                let sizes = ['small', 'medium', 'large'];
+
+                // return object
+                return {
+                    html:   htmlContent,
+                    size:   sizes[randomIndex],
+                    title:  titleContent
+                };
+            }
+
+            console.log("Let's initialize the canvas");
+            // interaction with the sdk
+            // 1. initialize SDK
+            window.CanvasSDK.initialize({
+
+                'nonce': function(e) {
+                    return getNonce(e);
+                },
+                'component-values': function() {
+                    return getValue();
+                }
+            })
+            // 2. get the components (and their persisted values) associated with this widget
+            .then(function() {
+               // return window.CanvasSDK.getComponents();
+            })
+            // 3. use the response from the previous call to get the components in order to populate the UI
+            .then(function(response){
+
+                // Internally set value (and get component name for use in our modal)
+               // let componentName = setValue(response.components);
+
+            });
+
+        </script>
+        <script type="text/javascript" src="../js/iframeResizer.contentWindow.min.js"></script>
+    </body>
 </html>

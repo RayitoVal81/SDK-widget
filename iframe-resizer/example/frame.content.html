@@ -195,7 +195,10 @@
 
         </script>
         <script>
-            $( "select" ).parent( "div" ).addClass( "m-select" );
+            $(document).ready(function(){
+              $('select').parent('div').addClass( "m-select" );
+            });
+            //$( "select" ).parent( "div" ).addClass( "m-select" );
         </script>
         <script type="text/javascript" src="../js/iframeResizer.contentWindow.min.js"></script>
     </body>
